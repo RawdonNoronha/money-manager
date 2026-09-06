@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -23,6 +22,16 @@ import type { LucideIcon } from "lucide-react";
 import { useEffect } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "../firebase/firebase";
+import {
+    Popover,
+    PopoverContent,
+    PopoverDescription,
+    PopoverHeader,
+    PopoverTitle,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 
 interface NavigationItem {
     label: string;
@@ -130,6 +139,26 @@ export default function DashboardLayout({
             .toUpperCase();
     };
 
+    const handleSignOut = async () => {
+        try {
+            await auth.signOut();
+            setCurrentUser(null);
+            toast.add({
+                type: "success",
+                title: "Signed Out",
+                description: "You have successfully signed out.",
+            });
+            console.log("User signed out successfully");
+        } catch (error) {
+            toast.add({
+                type: "error",
+                title: "Sign Out Failed",
+                description: "An error occurred while signing out.",
+            });
+            console.error("Error signing out:", error);
+        }
+    };
+
     return (
         <div className={isDarkMode ? "dark" : ""}>
             <div className="app-shell">
@@ -170,7 +199,43 @@ export default function DashboardLayout({
                                 <p className="truncate text-sm font-bold">{currentUser?.displayName || "Guest"}</p>
                                 <p className="truncate text-xs text-[var(--subtle)]">{currentUser?.email || "guest@example.com"}</p>
                             </div>
-                            <MoreHorizontal size={17} className="ml-auto text-[var(--subtle)]" />
+                            <Popover>
+                                <PopoverTrigger
+                                    render={
+                                        <button
+                                            type="button"
+                                            className="icon-button ml-auto"
+                                            aria-label="Open account menu"
+                                        />
+                                    }
+                                >
+                                    <MoreHorizontal size={17} />
+                                </PopoverTrigger>
+                                <PopoverContent className="p-4">
+                                    <PopoverHeader>
+                                        <PopoverTitle>
+                                            {currentUser?.displayName || "Guest"}
+                                        </PopoverTitle>
+                                        <PopoverDescription>
+                                            {currentUser?.email || "guest@example.com"}
+                                        </PopoverDescription>
+                                        {
+                                            currentUser ? (
+                                                <Button onClick={handleSignOut} variant="outline" disabled={!currentUser} className="mt-3 w-full">
+                                                    Sign Out
+                                                </Button>
+                                            )
+                                                :
+                                                (
+                                                    <Button onClick={() => window.location.href = '/sign-in'} variant="outline" className="mt-3 w-full">
+                                                        Sign In
+                                                    </Button>
+                                                )
+                                        }
+                                    </PopoverHeader>
+                                </PopoverContent>
+                            </Popover>
+
                         </div>
                     </div>
                 </aside>
@@ -214,7 +279,7 @@ export default function DashboardLayout({
                                 <div className="grid h-8 w-8 place-items-center rounded-full bg-[#e4c1a8] text-[11px] font-bold text-[#774f38]">
                                     {getInitials(currentUser?.displayName || "Guest")}
                                 </div>
-                                <ChevronDown size={14} className="text-[var(--subtle)]"  />
+                                <ChevronDown size={14} className="text-[var(--subtle)]" />
                             </div>
                         </div>
                     </header>
