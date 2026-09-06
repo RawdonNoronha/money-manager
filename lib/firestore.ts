@@ -14,54 +14,127 @@ import {
 import { db } from "@/app/firebase/firebase";
 import type { Account, Budget, Category, Transaction } from "@/lib/types";
 
-const readCollection = async <T extends { id: string }>(name: string) => {
-  const snapshot = await getDocs(collection(db, name));
-  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as T);
-};
+type NewCategory = Omit<Category, "id" | "createdAt">;
+type NewAccount = Omit<Account, "id" | "createdAt">;
+type NewBudget = Omit<Budget, "id" | "createdAt">;
+type NewTransaction = Omit<Transaction, "id" | "createdAt">;
 
-export const getCategories = () => readCollection<Category>("categories");
-export const getAccounts = () => readCollection<Account>("accounts");
-export const getBudgets = () => readCollection<Budget>("budgets");
+async function readCollection<T extends { id: string }>(collectionName: string): Promise<T[]> {
+  const collectionReference = collection(db, collectionName);
+  const snapshot = await getDocs(collectionReference);
 
-export async function getTransactions(max = 250) {
-  const snapshot = await getDocs(
-    query(collection(db, "transactions"), orderBy("date", "desc"), limit(max)),
+  return snapshot.docs.map((documentSnapshot) => ({
+    id: documentSnapshot.id,
+    ...documentSnapshot.data(),
+  }) as T);
+}
+
+export async function getCategories(): Promise<Category[]> {
+  return readCollection<Category>("categories");
+}
+
+export async function getAccounts(): Promise<Account[]> {
+  return readCollection<Account>("accounts");
+}
+
+export async function getBudgets(): Promise<Budget[]> {
+  return readCollection<Budget>("budgets");
+}
+
+export async function getTransactions(maximumTransactions = 250): Promise<Transaction[]> {
+  const transactionsQuery = query(
+    collection(db, "transactions"),
+    orderBy("date", "desc"),
+    limit(maximumTransactions),
   );
-  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Transaction);
+  const snapshot = await getDocs(transactionsQuery);
+
+  return snapshot.docs.map((documentSnapshot) => ({
+    id: documentSnapshot.id,
+    ...documentSnapshot.data(),
+  }) as Transaction);
 }
 
-export async function createCategory(category: Omit<Category, "id" | "createdAt">) {
-  return addDoc(collection(db, "categories"), { ...category, createdAt: serverTimestamp() });
+export async function createCategory(category: NewCategory) {
+  const categoryData = {
+    ...category,
+    createdAt: serverTimestamp(),
+  };
+
+  return addDoc(collection(db, "categories"), categoryData);
 }
 
-export async function updateCategory(id: string, category: Partial<Category>) {
-  const data = { ...category };
-  delete data.id;
-  delete data.createdAt;
-  return updateDoc(doc(db, "categories", id), data);
+export async function updateCategory(categoryId: string, category: Partial<NewCategory>) {
+  const categoryReference = doc(db, "categories", categoryId);
+  return updateDoc(categoryReference, category);
 }
 
-export async function deleteCategory(id: string) {
-  const transactions = await getDocs(
-    query(collection(db, "transactions"), where("categoryId", "==", id), limit(1)),
+export async function deleteCategory(categoryId: string) {
+  const transactionsUsingCategoryQuery = query(
+    collection(db, "transactions"),
+    where("categoryId", "==", categoryId),
+    limit(1),
   );
-  if (!transactions.empty) throw new Error("This category is used by existing transactions.");
-  return deleteDoc(doc(db, "categories", id));
+  const transactionsUsingCategory = await getDocs(transactionsUsingCategoryQuery);
+
+  if (!transactionsUsingCategory.empty) {
+    throw new Error("This category is used by existing transactions.");
+  }
+
+  const categoryReference = doc(db, "categories", categoryId);
+  return deleteDoc(categoryReference);
 }
 
-export async function createAccount(account: Omit<Account, "id" | "createdAt">) {
-  return addDoc(collection(db, "accounts"), { ...account, createdAt: serverTimestamp() });
+export async function createAccount(account: NewAccount) {
+  const accountData = {
+    ...account,
+    createdAt: serverTimestamp(),
+  };
+
+  return addDoc(collection(db, "accounts"), accountData);
 }
 
-export async function createBudget(budget: Omit<Budget, "id" | "createdAt">) {
-  return addDoc(collection(db, "budgets"), { ...budget, createdAt: serverTimestamp() });
+export async function createBudget(budget: NewBudget) {
+  const budgetData = {
+    ...budget,
+    createdAt: serverTimestamp(),
+  };
+
+  return addDoc(collection(db, "budgets"), budgetData);
 }
 
-export async function createTransaction(transaction: Omit<Transaction, "id" | "createdAt">) {
-  return addDoc(collection(db, "transactions"), { ...transaction, createdAt: serverTimestamp() });
+export async function createTransaction(transaction: NewTransaction) {
+  const transactionData = {
+    ...transaction,
+    createdAt: serverTimestamp(),
+  };
+
+  return addDoc(collection(db, "transactions"), transactionData);
 }
 
 export const defaultCategories: Omit<Category, "id" | "createdAt">[] = [
-  ...["Groceries", "Food", "Housing", "Transport", "Shopping", "Entertainment", "Bills", "Health", "Education", "Travel", "Other"].map((name) => ({ name, type: "expense" as const, icon: "tag", color: "#295b55" })),
-  ...["Salary", "Freelance", "Investment", "Gift", "Other"].map((name) => ({ name, type: "income" as const, icon: "trending-up", color: "#2b8069" })),
+  ...[
+    "Groceries",
+    "Food",
+    "Housing",
+    "Transport",
+    "Shopping",
+    "Entertainment",
+    "Bills",
+    "Health",
+    "Education",
+    "Travel",
+    "Other",
+  ].map((name) => ({
+    name,
+    type: "expense" as const,
+    icon: "tag",
+    color: "#295b55",
+  })),
+  ...["Salary", "Freelance", "Investment", "Gift", "Other"].map((name) => ({
+    name,
+    type: "income" as const,
+    icon: "trending-up",
+    color: "#2b8069",
+  })),
 ];

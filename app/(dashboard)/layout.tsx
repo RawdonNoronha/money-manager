@@ -2,25 +2,214 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, ChevronDown, CreditCard, FileText, Home, LayoutDashboard, Menu, Moon, MoreHorizontal, Settings, Tag, TrendingUp, Wallet, X } from "lucide-react";
+import {
+  Bell,
+  ChevronDown,
+  CreditCard,
+  FileText,
+  Home,
+  LayoutDashboard,
+  Menu,
+  Moon,
+  MoreHorizontal,
+  Settings,
+  Tag,
+  TrendingUp,
+  Wallet,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 
-const navItems = [["Dashboard", "/dashboard", LayoutDashboard], ["Transactions", "/transactions", FileText], ["Budgets", "/budgets", Wallet], ["Categories", "/categories", Tag], ["Accounts", "/accounts", CreditCard], ["Reports", "/reports", TrendingUp]] as const;
-const titles: Record<string, string> = { "/dashboard": "Dashboard", "/transactions": "Transactions", "/budgets": "Budgets", "/categories": "Categories", "/accounts": "Accounts", "/reports": "Reports", "/settings": "Settings" };
-const bottomItems: [string, string, LucideIcon][] = [["Home", "/dashboard", Home], ["Transactions", "/transactions", FileText], ["Budgets", "/budgets", Wallet], ["Reports", "/reports", TrendingUp], ["More", "/settings", MoreHorizontal]];
+interface NavigationItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+}
 
-function Logo() { return <div className="flex items-center gap-3"><div className="grid h-9 w-9 place-items-center rounded-xl bg-[#295b55] text-white"><Wallet size={18} /></div><span className="text-[15px] font-bold tracking-tight">Money Manager</span></div>; }
+const navigationItems: NavigationItem[] = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Transactions", href: "/transactions", icon: FileText },
+  { label: "Budgets", href: "/budgets", icon: Wallet },
+  { label: "Categories", href: "/categories", icon: Tag },
+  { label: "Accounts", href: "/accounts", icon: CreditCard },
+  { label: "Reports", href: "/reports", icon: TrendingUp },
+];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+const mobileNavigationItems: NavigationItem[] = [
+  { label: "Home", href: "/dashboard", icon: Home },
+  { label: "Transactions", href: "/transactions", icon: FileText },
+  { label: "Budgets", href: "/budgets", icon: Wallet },
+  { label: "Reports", href: "/reports", icon: TrendingUp },
+  { label: "More", href: "/settings", icon: MoreHorizontal },
+];
+
+const pageTitles: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/transactions": "Transactions",
+  "/budgets": "Budgets",
+  "/categories": "Categories",
+  "/accounts": "Accounts",
+  "/reports": "Reports",
+  "/settings": "Settings",
+};
+
+function Logo() {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#295b55] text-white">
+        <Wallet size={18} />
+      </div>
+      <span className="text-[15px] font-bold tracking-tight">Money Manager</span>
+    </div>
+  );
+}
+
+function NavigationLink({
+  item,
+  isActive,
+  onClick,
+}: {
+  item: NavigationItem;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  const Icon = item.icon;
+
+  return (
+    <Link
+      href={item.href}
+      onClick={onClick}
+      className={`nav-item ${isActive ? "nav-active" : ""}`}
+    >
+      <Icon size={18} />
+      {item.label}
+    </Link>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [dark, setDark] = useState(false);
-  const title = titles[pathname] ?? "Dashboard";
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  return <div className={dark ? "dark" : ""}><div className="app-shell">
-    <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}><div className="mb-9 flex items-center justify-between"><Logo /><button onClick={() => setSidebarOpen(false)} className="rounded-lg p-2 text-[var(--subtle)] lg:hidden" aria-label="Close navigation"><X size={18} /></button></div><nav className="grid gap-1">{navItems.map(([label, href, Icon]) => <Link key={href} href={href} onClick={() => setSidebarOpen(false)} className={`nav-item ${isActive(href) ? "nav-active" : ""}`}><Icon size={18} />{label}</Link>)}</nav><div className="mt-auto grid gap-1"><Link href="/settings" onClick={() => setSidebarOpen(false)} className={`nav-item ${isActive("/settings") ? "nav-active" : ""}`}><Settings size={18} />Settings</Link><div className="mt-4 flex items-center gap-3 border-t border-[var(--line)] pt-5"><div className="grid h-9 w-9 place-items-center rounded-full bg-[#e4c1a8] text-xs font-bold text-[#774f38]">JD</div><div className="min-w-0"><p className="truncate text-sm font-bold">Jamie Davis</p><p className="truncate text-xs text-[var(--subtle)]">jamie@email.com</p></div><MoreHorizontal size={17} className="ml-auto text-[var(--subtle)]" /></div></div></aside>
-    {sidebarOpen && <button aria-label="Close navigation" onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-30 bg-black/25 lg:hidden" />}<main className="main-content"><header className="topbar"><button onClick={() => setSidebarOpen(true)} aria-label="Open navigation" className="rounded-lg p-2 text-[var(--subtle)] lg:hidden"><Menu size={21} /></button><div className="hidden items-center gap-2 text-sm text-[var(--subtle)] md:flex"><span>Workspace</span><span>/</span><span className="font-semibold text-[var(--ink)]">{title}</span></div><div className="ml-auto flex items-center gap-2"><button aria-label="Toggle theme" onClick={() => setDark(!dark)} className="icon-button"><Moon size={18} /></button><button aria-label="Notifications" className="icon-button relative"><Bell size={18} /><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#d96b5e]" /></button><div className="ml-1 hidden h-8 w-px bg-[var(--line)] sm:block" /><div className="hidden items-center gap-2 sm:flex"><div className="grid h-8 w-8 place-items-center rounded-full bg-[#e4c1a8] text-[11px] font-bold text-[#774f38]">JD</div><ChevronDown size={14} className="text-[var(--subtle)]" /></div></div></header><div className="page-wrap">{children}</div></main>
-    <nav className="bottom-nav">{bottomItems.map(([label, href, Icon]) => <Link key={href} href={href} className={isActive(href) ? "bottom-active" : ""}><Icon size={19} /><span>{label}</span></Link>)}</nav>
-  </div></div>;
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const pageTitle = pageTitles[pathname] ?? "Dashboard";
+  const isPathActive = (href: string): boolean =>
+    pathname === href || pathname.startsWith(`${href}/`);
+  const closeSidebar = (): void => setIsSidebarOpen(false);
+
+  return (
+    <div className={isDarkMode ? "dark" : ""}>
+      <div className="app-shell">
+        <aside className={`sidebar ${isSidebarOpen ? "sidebar-open" : ""}`}>
+          <div className="mb-9 flex items-center justify-between">
+            <Logo />
+            <button
+              onClick={closeSidebar}
+              className="rounded-lg p-2 text-[var(--subtle)] lg:hidden"
+              aria-label="Close navigation"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <nav className="grid gap-1">
+            {navigationItems.map((item) => (
+              <NavigationLink
+                key={item.href}
+                item={item}
+                isActive={isPathActive(item.href)}
+                onClick={closeSidebar}
+              />
+            ))}
+          </nav>
+
+          <div className="mt-auto grid gap-1">
+            <NavigationLink
+              item={{ label: "Settings", href: "/settings", icon: Settings }}
+              isActive={isPathActive("/settings")}
+              onClick={closeSidebar}
+            />
+            <div className="mt-4 flex items-center gap-3 border-t border-[var(--line)] pt-5">
+              <div className="grid h-9 w-9 place-items-center rounded-full bg-[#e4c1a8] text-xs font-bold text-[#774f38]">
+                JD
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold">Jamie Davis</p>
+                <p className="truncate text-xs text-[var(--subtle)]">jamie@email.com</p>
+              </div>
+              <MoreHorizontal size={17} className="ml-auto text-[var(--subtle)]" />
+            </div>
+          </div>
+        </aside>
+
+        {isSidebarOpen && (
+          <button
+            aria-label="Close navigation"
+            onClick={closeSidebar}
+            className="fixed inset-0 z-30 bg-black/25 lg:hidden"
+          />
+        )}
+
+        <main className="main-content">
+          <header className="topbar">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="Open navigation"
+              className="rounded-lg p-2 text-[var(--subtle)] lg:hidden"
+            >
+              <Menu size={21} />
+            </button>
+            <div className="hidden items-center gap-2 text-sm text-[var(--subtle)] md:flex">
+              <span>Workspace</span>
+              <span>/</span>
+              <span className="font-semibold text-[var(--ink)]">{pageTitle}</span>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                aria-label="Toggle theme"
+                onClick={() => setIsDarkMode((darkMode) => !darkMode)}
+                className="icon-button"
+              >
+                <Moon size={18} />
+              </button>
+              <button aria-label="Notifications" className="icon-button relative">
+                <Bell size={18} />
+                <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#d96b5e]" />
+              </button>
+              <div className="ml-1 hidden h-8 w-px bg-[var(--line)] sm:block" />
+              <div className="hidden items-center gap-2 sm:flex">
+                <div className="grid h-8 w-8 place-items-center rounded-full bg-[#e4c1a8] text-[11px] font-bold text-[#774f38]">
+                  JD
+                </div>
+                <ChevronDown size={14} className="text-[var(--subtle)]" />
+              </div>
+            </div>
+          </header>
+          <div className="page-wrap">{children}</div>
+        </main>
+
+        <nav className="bottom-nav">
+          {mobileNavigationItems.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={isPathActive(item.href) ? "bottom-active" : ""}
+              >
+                <Icon size={19} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </div>
+  );
 }

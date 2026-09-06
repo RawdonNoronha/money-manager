@@ -1,9 +1,8 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
 import { getApps } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY || process.env.API_KEY,
   authDomain: process.env.NEXT_PUBLIC_AUTH_DOMAIN || process.env.AUTH_DOMAIN,
@@ -14,6 +13,14 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_MEASUREMENT_ID || process.env.MEASUREMENT_ID,
 };
 
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+// Reuse the existing app during development so hot reload does not initialize
+// Firebase more than once.
+const existingApps = getApps();
+const app = existingApps.length > 0
+  ? existingApps[0]
+  : initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
+
+// Export the Auth service so authentication flows use the same Firebase app.
+export const auth = getAuth(app);
