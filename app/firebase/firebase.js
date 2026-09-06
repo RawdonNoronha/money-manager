@@ -25,18 +25,17 @@ export const db = getFirestore(app);
 // Export the Auth service so authentication flows use the same Firebase app.
 export const auth = getAuth(app);
 
-
-// const auth = getAuth();
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    // User is signed in, see docs for a list of available properties
-    // https://firebase.google.com/docs/reference/js/auth.user
-    const uid = user.uid;
-    console.log("User is signed in:", user.uid);
-    // ...
-  } else {
-    // User is signed out
-    // ...
-    console.log("No user is signed in");
-  }
-});
+// export const getCurrentUser = async () => {
+//   return new Promise((resolve) => {
+//     onAuthStateChanged(auth, (user) => {
+//       if (user) {
+//         const uid = user.uid;
+//         console.log("User is signed in:", user);
+//         resolve(user);
+//       } else {
+//         console.log("No user is signed in");
+//         resolve(null);
+//       }
+//     })
+//   });
+// }

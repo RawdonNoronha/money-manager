@@ -13,36 +13,47 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { auth } from "@/app/firebase/firebase"
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { toast } from '@/components/ui/toast'
 import { useRouter } from "next/navigation";
 
 const page = () => {
     const router = useRouter();
+    const [name, setName] = React.useState("");
     const [email, setEmail] = React.useState("");
     const [password, setPassword] = React.useState("");
 
-    const signUp = (email: string, password: string) => {
-        createUserWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-                // Signed up 
-                const user = userCredential.user;
-                toast.add({
-                    type: "success",
-                    title: "User Created",
-                    description: "You have successfully created an account.",
-                })
-                router.push('/dashboard')
-            })
-            .catch((error) => {
-                const errorCode = error.code;
-                const errorMessage = error.message;
-                toast.add({
-                    type: "error",
-                    title: `Sign Up Failed ${errorCode}`,
-                    description: errorMessage,
-                })
+    const signUp = async (email: string, password: string) => {
+        try {
+            const userCredential = await createUserWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
+
+            const user = userCredential.user;
+
+            await updateProfile(user, {
+                displayName: name,
             });
+
+            toast.add({
+                type: "success",
+                title: "User Created",
+                description: "You have successfully created an account.",
+            });
+
+            router.push("/dashboard");
+        } catch (error: any) {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+
+            toast.add({
+                type: "error",
+                title: `Sign Up Failed: ${errorCode} `,
+                description: errorMessage,
+            });
+        }
     }
 
     return (
@@ -62,6 +73,16 @@ const page = () => {
                 <CardContent>
                     <form>
                         <div className="flex flex-col gap-6">
+                            <div className="grid gap-2">
+                                <Label htmlFor="name">Full Name</Label>
+                                <Input
+                                    id="name"
+                                    type="text"
+                                    placeholder="John Doe"
+                                    required
+                                    onChange={(e) => setName(e.target.value)}
+                                />
+                            </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email</Label>
                                 <Input
