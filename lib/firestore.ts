@@ -11,13 +11,23 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { db } from "@/app/firebase/firebase";
+import { auth, db } from "@/app/firebase/firebase";
 import type { Account, Budget, Category, Transaction } from "@/lib/types";
 
 type NewCategory = Omit<Category, "id" | "createdAt">;
 type NewAccount = Omit<Account, "id" | "createdAt">;
 type NewBudget = Omit<Budget, "id" | "createdAt">;
 type NewTransaction = Omit<Transaction, "id" | "createdAt">;
+
+function userCategoriesCollection() {
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("You must be signed in to manage categories.");
+  }
+
+  return collection(db, "users", user.uid, "categories");
+}
 
 async function readCollection<T extends { id: string }>(collectionName: string): Promise<T[]> {
   const collectionReference = collection(db, collectionName);
@@ -30,7 +40,13 @@ async function readCollection<T extends { id: string }>(collectionName: string):
 }
 
 export async function getCategories(): Promise<Category[]> {
-  return readCollection<Category>("categories");
+  const categoriesCollection = userCategoriesCollection();
+  const snapshot = await getDocs(categoriesCollection);
+
+  return snapshot.docs.map((documentSnapshot) => ({
+    id: documentSnapshot.id,
+    ...documentSnapshot.data(),
+  }) as Category);
 }
 
 export async function getAccounts(): Promise<Account[]> {
@@ -61,11 +77,11 @@ export async function createCategory(category: NewCategory) {
     createdAt: serverTimestamp(),
   };
 
-  return addDoc(collection(db, "categories"), categoryData);
+  return addDoc(userCategoriesCollection(), categoryData);
 }
 
 export async function updateCategory(categoryId: string, category: Partial<NewCategory>) {
-  const categoryReference = doc(db, "categories", categoryId);
+  const categoryReference = doc(userCategoriesCollection(), categoryId);
   return updateDoc(categoryReference, category);
 }
 
@@ -81,7 +97,7 @@ export async function deleteCategory(categoryId: string) {
     throw new Error("This category is used by existing transactions.");
   }
 
-  const categoryReference = doc(db, "categories", categoryId);
+  const categoryReference = doc(userCategoriesCollection(), categoryId);
   return deleteDoc(categoryReference);
 }
 

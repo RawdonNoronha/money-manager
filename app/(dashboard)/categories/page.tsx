@@ -9,6 +9,11 @@ import {
     updateCategory,
 } from "@/lib/firestore";
 import type { Category, EntryType } from "@/lib/types";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type CategoryForm = {
     name: string;
@@ -24,25 +29,32 @@ const emptyForm: CategoryForm = {
     color: "#295b55",
 };
 
+const categoryTypes = [
+    { label: "Expense", value: "expense" },
+    { label: "Income", value: "income" },
+] as const;
+
 function CategoryFormModal({
     category,
     isSaving,
+    errorMessage,
     onClose,
     onSubmit,
 }: {
     category: Category | null;
     isSaving: boolean;
+    errorMessage: string;
     onClose: () => void;
     onSubmit: (form: CategoryForm) => Promise<void>;
 }) {
     const [form, setForm] = useState<CategoryForm>(
         category
             ? {
-                    name: category.name,
-                    type: category.type,
-                    icon: category.icon,
-                    color: category.color,
-                }
+                name: category.name,
+                type: category.type,
+                icon: category.icon,
+                color: category.color,
+            }
             : emptyForm,
     );
 
@@ -53,93 +65,72 @@ function CategoryFormModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-            <form
-                onSubmit={handleSubmit}
-                className="w-full max-w-md rounded-3xl bg-[var(--surface)] p-6 shadow-xl"
-            >
-                <h2 className="text-xl font-bold">
-                    {category ? "Edit category" : "Add category"}
-                </h2>
-                <p className="mt-1 text-sm text-[var(--subtle)]">
-                    Categories help organize your income and expenses.
-                </p>
-
-                <div className="mt-5 grid gap-4">
-                    <label>
-                        <span className="field-label">Name</span>
-                        <input
-                            name="name"
-                            value={form.name}
-                            onChange={(event) =>
-                                setForm((current) => ({ ...current, name: event.target.value }))
-                            }
-                            required
-                            autoFocus
-                            className="field-input"
-                            maxLength={50}
-                        />
-                    </label>
-                    <label>
-                        <span className="field-label">Type</span>
-                        <select
-                            name="type"
-                            value={form.type}
-                            onChange={(event) =>
-                                setForm((current) => ({
-                                    ...current,
-                                    type: event.target.value as EntryType,
-                                }))
-                            }
-                            className="field-input"
-                        >
-                            <option value="expense">Expense</option>
-                            <option value="income">Income</option>
-                        </select>
-                    </label>
-                    <label>
-                        <span className="field-label">Color</span>
-                        <div className="flex gap-2">
-                            <input
-                                type="color"
-                                value={form.color}
-                                onChange={(event) =>
-                                    setForm((current) => ({ ...current, color: event.target.value }))
-                                }
-                                className="h-10 w-12 cursor-pointer rounded-lg border border-[var(--line)] bg-transparent p-1"
-                                aria-label="Category color"
-                            />
-                            <input
-                                value={form.color}
-                                onChange={(event) =>
-                                    setForm((current) => ({ ...current, color: event.target.value }))
-                                }
-                                pattern="^#[0-9A-Fa-f]{6}$"
-                                required
-                                className="field-input flex-1"
-                                aria-label="Category hex color"
-                            />
+            <Card className="w-full max-w-sm">
+                <CardHeader>
+                    <CardTitle>{category ? "Edit category" : "Add category"}</CardTitle>
+                    <CardDescription>
+                        Categories help organize your income and expenses.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form id="category-form" onSubmit={handleSubmit}>
+                        <div className="flex flex-col gap-6">
+                            {errorMessage && (
+                                <p className="rounded-lg bg-[#fae8e4] px-3 py-2 text-sm text-[#9f4038]">
+                                    {errorMessage}
+                                </p>
+                            )}
+                            <div className="grid gap-2">
+                                <Label htmlFor="name">Category Name</Label>
+                                <Input
+                                    id="name"
+                                    name="name"
+                                    type="text"
+                                    placeholder="Food And Necessities"
+                                    value={form.name}
+                                    onChange={(event) =>
+                                        setForm((current) => ({ ...current, name: event.target.value }))
+                                    }
+                                    required
+                                    autoFocus
+                                    maxLength={50}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="category-type">Category Type</Label>
+                                <Select
+                                    value={form.type}
+                                    onValueChange={(value) =>
+                                        setForm((current) => ({ ...current, type: value as EntryType }))
+                                    }
+                                >
+                                    <SelectTrigger id="category-type" className="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>Category Type</SelectLabel>
+                                            {categoryTypes.map((item) => (
+                                                <SelectItem key={item.value} value={item.value}>
+                                                    {item.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
-                    </label>
-                </div>
-
-                <div className="mt-6 flex gap-3">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        disabled={isSaving}
-                        className="h-10 flex-1 rounded-xl border border-[var(--line)] text-sm font-semibold disabled:opacity-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSaving}
-                        className="h-10 flex-1 rounded-xl bg-[#295b55] text-sm font-semibold text-white disabled:opacity-50"
-                    >
+                    </form>
+                </CardContent>
+                <CardFooter className="flex-row gap-2">
+                    <Button type="button" variant="outline" className="w-1/2" onClick={onClose} disabled={isSaving}>
+                        Close
+                    </Button>
+                    <Button type="submit" form="category-form" className="w-1/2" disabled={isSaving}>
                         {isSaving ? "Saving..." : category ? "Save changes" : "Create category"}
-                    </button>
-                </div>
-            </form>
+                    </Button>
+                </CardFooter>
+            </Card>
         </div>
     );
 }
@@ -204,7 +195,8 @@ export default function Categories() {
             setIsFormOpen(false);
             setEditingCategory(null);
             await loadCategories();
-        } catch {
+        } catch (reason: unknown) {
+            console.error("Could not save category:", reason);
             setErrorMessage(
                 editingCategory ? "Could not update category." : "Could not create category.",
             );
@@ -240,13 +232,13 @@ export default function Categories() {
                         Keep your income and expenses organized.
                     </p>
                 </div>
-                <button
+                <Button
                     onClick={openCreateForm}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#295b55] px-4 text-sm font-semibold text-white"
+                    className="h-10 bg-[#295b55] px-4 text-white hover:bg-[#234d48]"
                 >
                     <Plus size={17} />
                     Add category
-                </button>
+                </Button>
             </div>
 
             {errorMessage && (
@@ -275,24 +267,28 @@ export default function Categories() {
                                     <p className="truncate font-semibold">{category.name}</p>
                                     <p className="text-xs capitalize text-[var(--subtle)]">{category.type}</p>
                                 </div>
-                                <button
+                                <Button
                                     type="button"
                                     onClick={() => openEditForm(category)}
-                                    className="grid h-9 w-9 place-items-center rounded-lg text-[var(--subtle)] hover:bg-[var(--muted)] hover:text-[var(--ink)]"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-[var(--subtle)] hover:text-[var(--ink)]"
                                     aria-label={`Edit ${category.name}`}
                                     title="Edit category"
                                 >
                                     <Edit2 size={16} />
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     type="button"
                                     onClick={() => void handleDelete(category)}
-                                    className="grid h-9 w-9 place-items-center rounded-lg text-[var(--subtle)] hover:bg-[#fae8e4] hover:text-[#9f4038]"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-[var(--subtle)] hover:bg-[#fae8e4] hover:text-[#9f4038]"
                                     aria-label={`Delete ${category.name}`}
                                     title="Delete category"
                                 >
                                     <Trash2 size={16} />
-                                </button>
+                                </Button>
                             </div>
                         ))}
                     </div>
@@ -311,6 +307,7 @@ export default function Categories() {
                 <CategoryFormModal
                     category={editingCategory}
                     isSaving={isSaving}
+                    errorMessage={errorMessage}
                     onClose={() => setIsFormOpen(false)}
                     onSubmit={handleSave}
                 />

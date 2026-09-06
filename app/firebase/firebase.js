@@ -1,7 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth } from "firebase/auth";
+import { GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY || process.env.API_KEY,
@@ -25,17 +26,8 @@ export const db = getFirestore(app);
 // Export the Auth service so authentication flows use the same Firebase app.
 export const auth = getAuth(app);
 
-// export const getCurrentUser = async () => {
-//   return new Promise((resolve) => {
-//     onAuthStateChanged(auth, (user) => {
-//       if (user) {
-//         const uid = user.uid;
-//         console.log("User is signed in:", user);
-//         resolve(user);
-//       } else {
-//         console.log("No user is signed in");
-//         resolve(null);
-//       }
-//     })
-//   });
-// }
+export const provider = new GoogleAuthProvider();
+// provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
+
+// const auth = getAuth();
+// auth.languageCode = 'it';

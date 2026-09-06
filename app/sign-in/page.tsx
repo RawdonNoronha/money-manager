@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { auth } from "@/app/firebase/firebase"
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, provider } from "@/app/firebase/firebase"
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { toast } from '@/components/ui/toast'
 import { useRouter } from "next/navigation";
 
@@ -29,7 +29,7 @@ const SignInPage = () => {
                 const user = userCredential.user;
                 toast.add({
                     type: "success",
-                    title: "User Signed In",
+                    title: `${user.displayName} Signed In`,
                     description: "You have successfully signed in to your account.",
                 })
                 router.push('/dashboard')
@@ -37,6 +37,37 @@ const SignInPage = () => {
             .catch((error) => {
                 const errorCode = error.code;
                 const errorMessage = error.message;
+                toast.add({
+                    type: "error",
+                    title: `Sign In Failed ${errorCode}`,
+                    description: errorMessage,
+                })
+            });
+    }
+
+    const signInWithGoogle = (auth: any, provider: any) => {
+        signInWithPopup(auth, provider)
+            .then((result) => {
+                // This gives you a Google Access Token. You can use it to access the Google API.
+                const credential = GoogleAuthProvider.credentialFromResult(result);
+                const token = credential.accessToken;
+                // The signed-in user info.
+                const user = result.user;
+                // IdP data available using getAdditionalUserInfo(result)
+                toast.add({
+                    type: "success",
+                    title: `${user.displayName} Signed In`,
+                    description: "You have successfully signed in to your account.",
+                })
+                router.push('/dashboard')
+            }).catch((error) => {
+                // Handle Errors here.
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                // The email of the user's account used.
+                const email = error.customData.email;
+                // The AuthCredential type that was used.
+                const credential = GoogleAuthProvider.credentialFromError(error);
                 toast.add({
                     type: "error",
                     title: `Sign In Failed ${errorCode}`,
@@ -91,7 +122,7 @@ const SignInPage = () => {
                     <Button type="submit" className="w-full" onClick={() => signIn(email, password)}>
                         Login
                     </Button>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" onClick={() => signInWithGoogle(auth, provider)}>
                         Login with Google
                     </Button>
                 </CardFooter>
