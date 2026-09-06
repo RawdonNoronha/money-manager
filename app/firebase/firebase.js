@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getApps } from "firebase/app";
-import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY || process.env.API_KEY,
@@ -24,3 +24,19 @@ export const db = getFirestore(app);
 
 // Export the Auth service so authentication flows use the same Firebase app.
 export const auth = getAuth(app);
+
+
+// const auth = getAuth();
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // User is signed in, see docs for a list of available properties
+    // https://firebase.google.com/docs/reference/js/auth.user
+    const uid = user.uid;
+    console.log("User is signed in:", user.uid);
+    // ...
+  } else {
+    // User is signed out
+    // ...
+    console.log("No user is signed in");
+  }
+});
